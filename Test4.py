@@ -52,7 +52,7 @@ class TravelAgencyApp:
 
     def load_image(self, frame):
         # Path to the image file
-        image_path = "C:/Users/leish/OneDrive/Desktop/SUM_Python/SU5 Cover Page.jpg"  # Correct path
+        image_path = "coverpage.jpg"  # Correct path
 
         # Load the image using PIL
         image = Image.open(image_path)

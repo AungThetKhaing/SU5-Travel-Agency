@@ -139,6 +139,8 @@ class TravelAgencyApp:
 
         self.booking_list = tk.Listbox(self.booking_tab)
         self.booking_list.grid(column=0, row=3, columnspan=2, padx=10, pady=10, sticky='nsew')
+        
+        ttk.Button(self.booking_tab, text = "Confirm Booking", command=self.show_booking_confirmation).grid(column=1 ,row = 4, padx = 10 ,pady=10)
 
     def add_customer(self):
         name = self.customer_name.get()

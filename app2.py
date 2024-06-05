@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
+import mysql.connector
+from mysql.connector import Error
 
 class Customer:
     def __init__(self, name, email, phone, passport, address):
@@ -40,7 +42,61 @@ class TravelAgencyApp:
         self.customers = []
         self.trips = []
         self.bookings = []
+        
+        self.database_init()
         self.create_main_page()
+        
+        
+    def database_init(self):
+        try:
+            self.mydb = mysql.connector.connect(
+                host='localhost',
+                user='root',
+                password='',
+                database='SUM5TA'
+            )
+
+            if self.mydb.is_connected():
+                self.cursor = self.mydb.cursor()
+
+                self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS customers (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    phone VARCHAR(50) NOT NULL,
+                    passport VARCHAR(50) NOT NULL,
+                    address TEXT NOT NULL
+                )
+                ''')
+
+                self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS trips (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    destination VARCHAR(255) NOT NULL,
+                    option VARCHAR(255) NOT NULL,
+                    hotel VARCHAR(255) NOT NULL,
+                    duration INT NOT NULL,
+                    price FLOAT NOT NULL
+                )
+                ''')
+
+                self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS bookings (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    customer_id INT NOT NULL,
+                    trip_id INT NOT NULL,
+                    status VARCHAR(50) DEFAULT 'Not Confirmed',
+                    FOREIGN KEY (customer_id) REFERENCES customers(id),
+                    FOREIGN KEY (trip_id) REFERENCES trips(id)
+                )
+                ''')
+
+                self.mydb.commit()
+        except Error as e:
+            print(f"Error: {e}")
+            if self.mydb.is_connected():
+                self.mydb.close()
 
     def create_main_page(self):
         self.main_frame = ttk.Frame(self.root)
@@ -176,6 +232,17 @@ class TravelAgencyApp:
         if name and email and phone and passport and address:
             customer = Customer(name, email, phone, passport, address)
             self.customers.append(customer)
+            
+            #insert into table
+            try:
+                self.cursor.execute('''
+                INSERT INTO customers (name, email, phone, passport, address)
+                VALUES (%s, %s, %s, %s, %s)
+                ''', (name, email, phone, passport, address))
+                self.mydb.commit()
+            except Error as e:
+                print(f"Error: {e}")
+            
             self.customer_list.insert(tk.END, str(customer))
             self.booking_customer['values'] = [customer.name for customer in self.customers]
             self.customer_name.delete(0, tk.END)
@@ -199,6 +266,17 @@ class TravelAgencyApp:
         if destination and hotel and duration and price and option != "Select an option":
             trip = Trip(destination, option, hotel, int(duration), float(price))
             self.trips.append(trip)
+            
+            #insert into table
+            try:
+                self.cursor.execute('''
+                INSERT INTO trips (destination, option, hotel, duration, price)
+                VALUES (%s, %s, %s, %s, %s)
+                ''', (destination, option, hotel, duration, price))
+                self.mydb.commit()
+            except Error as e:
+                print(f"Error: {e}")
+            
             self.trip_list.insert(tk.END, str(trip))
             self.booking_trip['values'] = [trip.destination for trip in self.trips]
             self.trip_destination.delete(0, tk.END)
@@ -221,7 +299,22 @@ class TravelAgencyApp:
         if customer and trip:
             booking = Booking(customer, trip)
             self.bookings.append(booking)
-            self.booking_list.insert(tk.END, str(booking))
+            
+            try:
+                self.cursor.execute('''
+                INSERT INTO bookings (customer_id, trip_id, status)
+                VALUES (
+                    (SELECT id FROM customers WHERE name = %s),
+                    (SELECT id FROM trips WHERE destination = %s),
+                    'Not Confirmed'
+                )
+                ''', (customer_name, trip_destination))
+                self.mydb.commit()
+            except Error as e:
+                print(f"Error: {e}")
+
+            
+            self.booking_list.insert(tk.END, f"{str(booking)} - Not Confirmed")
         else:
             messagebox.showwarning("Input Error", "Please select valid customer and trip")
             
@@ -229,6 +322,26 @@ class TravelAgencyApp:
         try:
             selected_index = self.booking_list.curselection()[0]
             selected_booking = self.bookings[selected_index]
+            self.cursor.execute('''
+            SELECT id FROM bookings WHERE customer_id = (SELECT id FROM customers WHERE name = %s) 
+            AND trip_id = (SELECT id FROM trips WHERE destination = %s)
+            ''', (selected_booking.customer.name, selected_booking.trip.destination))
+            result = self.cursor.fetchone()
+            
+            if result is None:
+                raise ValueError("Booking not found in the database")
+            
+            booking_id= result[0]
+
+            self.cursor.execute('''
+            UPDATE bookings SET status = 'Confirmed' WHERE id = %s
+            ''', (booking_id,))
+            self.mydb.commit()
+
+            # Update the display in the listbox
+            self.booking_list.delete(selected_index)
+            self.booking_list.insert(selected_index, f"{str(selected_booking)} - Confirmed")
+            
             self.show_booking_confirmation(selected_booking)
         except IndexError:
             messagebox.showwarning("Selection Error", "Please select a booking to confirm")

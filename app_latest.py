@@ -240,11 +240,7 @@ class TravelAgencyApp:
         #Load initial booking data
         self.load_booking_data()
         
-    """def on_tab_selected(self, event):
-        selected_tab = event.widget.tab('current')['text']
-        if selected_tab == 'Bookings':
-            self.load_booking_data()"""
-    
+       
     def load_booking_data(self):
         self.customer_id_map = {}  # Ensure the map is cleared and reinitialized
         self.trip_id_map = {}
@@ -346,12 +342,6 @@ class TravelAgencyApp:
         self.load_booking_data()
 
 
-
-
-
-
-
-
     def add_customer(self):
         name = self.customer_name.get()
         email = self.customer_email.get()
@@ -423,15 +413,7 @@ class TravelAgencyApp:
         #self.refresh_booking_comboboxes()
         self.tab_control.select(self.booking_tab)
 
-    """def refresh_booking_comboboxes(self):
-        self.cursor.execute("SELECT name FROM customers")
-        customer_names = [row[0] for row in self.cursor.fetchall()]
-        self.booking_customer['values'] = customer_names
-
-        self.cursor.execute("SELECT destination FROM trips")
-        trip_destinations = [row[0] for row in self.cursor.fetchall()]
-        self.booking_trip['values'] = trip_destinations """
-
+    
     def create_booking(self):
         customer_entry = self.booking_customer.get()
         trip_entry = self.booking_trip.get()
@@ -487,96 +469,7 @@ class TravelAgencyApp:
         print(f"- Booking created: {customer_entry}, {trip_entry}.")
         self.load_booking_data()
 
-
-
-
-
-
-    """def confirm_booking(self):
-        try:
-            selected_index = self.booking_list.curselection()[0]
-            selected_booking = self.bookings[selected_index]
-            
-            self.cursor.execute('''
-            SELECT b.id FROM bookings b
-            JOIN customers c ON b.customer_id = c.id
-            JOIN trips t ON b.trip_id = t.id
-            WHERE c.name = %s AND t.destination = %s AND b.status = %s
-            LIMIT 1
-            ''', (selected_booking.customer.name, selected_booking.trip.destination, 'Not Confirmed'))
-            result = self.cursor.fetchone()
-            
-            if result is None:
-                raise ValueError("Booking not found or already confirmed in the database")
-            
-            booking_id = result[0]
-
-            self.cursor.execute('''
-            UPDATE bookings SET status = 'Confirmed' WHERE id = %s
-            ''', (booking_id,))
-            self.mydb.commit()
-
-            self.booking_list.delete(selected_index)
-            self.booking_list.insert(selected_index, f"{str(selected_booking)} - Confirmed")
-            
-            self.show_booking_confirmation(selected_booking)
-            print(f"- Booking confirmed: {selected_booking.customer.name}, {selected_booking.trip.destination}.")
-        except IndexError:
-            messagebox.showwarning("Selection Error", "Please select a booking to confirm")
-        except Error as e:
-            messagebox.showerror("Database Error", f"An error occurred: {e}")"""
-            
-            
-    """def confirm_booking(self):
-        try:
-            # Get the selected booking from the Tkinter list
-            selected_index = self.booking_list.curselection()[0]
-            selected_booking = self.bookings[selected_index]
-            
-            # Retrieve the booking ID for the selected customer and trip
-            self.cursor.execute('''
-            SELECT b.id, c.id, t.id FROM bookings b
-            JOIN customers c ON b.customer_id = c.id
-            JOIN trips t ON b.trip_id = t.id
-            WHERE c.name = %s AND t.destination = %s AND b.status = %s
-            LIMIT 1
-            ''', (selected_booking.customer.name, selected_booking.trip.destination, 'Not Confirmed'))
-            result = self.cursor.fetchone()
-            
-            if result is None:
-                raise ValueError("Booking not found or already confirmed in the database")
-            
-            booking_id, customer_id, trip_id = result
-
-            # Update the booking status to 'Confirmed'
-            self.cursor.execute('''
-            UPDATE bookings SET status = 'Confirmed' WHERE id = %s
-            ''', (booking_id,))
-            self.mydb.commit()
-
-            # Retrieve customer and trip details
-            self.cursor.execute('SELECT * FROM customers WHERE id = %s', (customer_id,))
-            customer_details = self.cursor.fetchone()
-
-            self.cursor.execute('SELECT * FROM trips WHERE id = %s', (trip_id,))
-            trip_details = self.cursor.fetchone()
-
-            # Update the Tkinter list and show confirmation
-            self.booking_list.delete(selected_index)
-            self.booking_list.insert(selected_index, f"{str(selected_booking)} - Confirmed")
-            
-            self.show_booking_confirmation(selected_booking)
-            print(f"Booking confirmed: {selected_booking.customer.name}, {selected_booking.trip.destination}.")
-
-            # Display customer and trip details (replace with your actual display logic)
-            print(f"Customer Details: {customer_details}")
-            print(f"Trip Details: {trip_details}")
-            
-        except IndexError:
-            messagebox.showwarning("Selection Error", "Please select a booking to confirm")
-        except Error as e:
-            messagebox.showerror("Database Error", f"An error occurred: {e}")"""
-            
+         
     def confirm_booking(self):
         try:
             # Get the selected booking from the Tkinter list
@@ -669,9 +562,6 @@ class TravelAgencyApp:
             trip_info = f"Trip: {trip_details[1]}, Option: {trip_details[2]}, Duration: {trip_details[3]} days, Price: ${trip_details[4]}"
 
             
-        #customer_info = f"Customer: {customer_details[1]}, Email: {customer_details[2]}, Phone: {customer_details[3]}, Passport: {customer_details[4]}, Address: {customer_details[5]}"
-        #trip_info = f"Trip: {trip_details[1]}, Option: {trip_details[2]}, Duration: {trip_details[3]} days, Price: ${trip_details[4]}"
-
         confirmation_message = f"Booking Confirmed!\n\n{customer_info}\n{trip_info}"
         messagebox.showinfo("Booking Confirmed!!", confirmation_message)
         confirmation_window = tk.Toplevel(self.root)
